@@ -1,0 +1,12 @@
+environment: dev
+source_name: open_meteo
+
+bronze_path: data/dev/bronze
+silver_path: data/dev/silver
+gold_path: data/dev/gold
+
+postgres_host: host.docker.internal
+postgres_port: 5432
+postgres_database: weather_dev
+postgres_user: weather_user
+postgres_table: daily_weather_summary

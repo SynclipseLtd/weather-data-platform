@@ -1,0 +1,8 @@
+pipelines:
+  weather:
+    source_name: open_meteo
+    bronze_entity: raw
+    silver_entity: weather
+    gold_entity: daily_weather_summary
+    partition_column: weather_date
+    postgres_table: daily_weather_summary
