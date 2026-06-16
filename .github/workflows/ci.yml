@@ -22,9 +22,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml requests pyspark
+          pip install pyyaml requests pyspark pytest
 
       - name: Check Python syntax
         run: |
           python -m py_compile scripts/ingest_weather_api.py
           python -m py_compile spark_jobs/bronze_to_silver_weather.py
+
+      - name: Run unit tests
+        run: |
+          pytest tests
