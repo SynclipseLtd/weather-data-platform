@@ -29,6 +29,13 @@ jobs:
           python -m py_compile scripts/ingest_weather_api.py
           python -m py_compile spark_jobs/bronze_to_silver_weather.py
 
+
+      - name: Scan for hardcoded secrets
+        run: |
+          ! grep -R "weather_password" .
+          ! grep -R "postgres_password:" .
+          ! grep -R "POSTGRES_PASSWORD=.*" . --exclude-dir=.git
+
       - name: Run unit tests
         run: |
           pytest tests
