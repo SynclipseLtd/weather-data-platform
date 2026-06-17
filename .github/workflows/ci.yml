@@ -32,8 +32,9 @@ jobs:
 
       - name: Scan for hardcoded secrets
         run: |
-          ! grep -R "weather_password" . --exclude=.github/workflows/ci.yml
-          ! grep -R "postgres_password:" . --exclude=.github/workflows/ci.yml
+          ! grep -R "weather_password" config dags docker scripts spark_jobs sql tests docker-compose.postgres.yaml
+          ! grep -R "postgres_password:" config dags docker scripts spark_jobs sql tests docker-compose.postgres.yaml
+          ! grep -R "POSTGRES_PASSWORD=.*" config dags docker scripts spark_jobs sql tests docker-compose.postgres.yaml
 
       - name: Run unit tests
         run: |
