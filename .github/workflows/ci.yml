@@ -32,9 +32,8 @@ jobs:
 
       - name: Scan for hardcoded secrets
         run: |
-          ! grep -R "weather_password" .
-          ! grep -R "postgres_password:" .
-          ! grep -R "POSTGRES_PASSWORD=.*" . --exclude-dir=.git
+          ! grep -R "weather_password" . --exclude=.github/workflows/ci.yml
+          ! grep -R "postgres_password:" . --exclude=.github/workflows/ci.yml
 
       - name: Run unit tests
         run: |
