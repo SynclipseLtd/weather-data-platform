@@ -1,15 +1,14 @@
 import argparse
 import os
-from datetime import datetime
-from importlib.metadata import metadata
-from logging import config
 import traceback
-from pyspark.sql.functions import col, posexplode,lit,to_date,avg,col,max,round,sum,count,when
+from datetime import datetime
 from pathlib import Path
 
 import yaml
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
+from pyspark.sql.functions import avg, col, lit, max, posexplode, round, sum, to_date
+from pyspark.sql.types import IntegerType, StringType, StructField, StructType
+
 from scripts.ingest_weather_api import load_pipeline_config
 
 
