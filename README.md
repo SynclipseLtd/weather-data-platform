@@ -6,3 +6,5 @@ This project builds a data engineering pipeline using:
 - Docker
 - PostgreSQL
 - CI/CD
+
+CI/CD configured successfully
