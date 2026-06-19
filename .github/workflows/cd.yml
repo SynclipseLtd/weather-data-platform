@@ -1,0 +1,17 @@
+name: Weather Data Platform CD
+
+on:
+  workflow_run:
+    workflows: ["Weather Data Platform CI"]
+    types:
+      - completed
+
+jobs:
+  deploy-dev:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Dev
+        run: |
+          echo "Deploying Weather Data Platform to DEV environment"
