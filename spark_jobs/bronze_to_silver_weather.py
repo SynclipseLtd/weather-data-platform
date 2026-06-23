@@ -173,20 +173,47 @@ def validate_silver_data(spark: SparkSession, silver_path: Path, source_name: st
 
     print("Validated Silver sample:")
     silver_df.show(10, truncate=False)
+def transform_silver_to_gold(silver_df, gold_aggregations):
 
-def transform_silver_to_gold(silver_df):
+    aggregation_expressions = []
+
+    for output_column, aggregation_config in gold_aggregations.items():
+
+        source_column = aggregation_config["source_column"]
+        aggregation_type = aggregation_config["aggregation"]
+
+        if aggregation_type == "avg":
+            expression = round(
+                avg(source_column),
+                2
+            ).alias(output_column)
+
+        elif aggregation_type == "sum":
+            expression = round(
+                sum(source_column),
+                2
+            ).alias(output_column)
+
+        elif aggregation_type == "max":
+            expression = round(
+                max(source_column),
+                2
+            ).alias(output_column)
+
+        else:
+            raise ValueError(
+                f"Unsupported aggregation type: {aggregation_type}"
+            )
+
+        aggregation_expressions.append(expression)
+
     gold_df = (
         silver_df.groupBy(
             "environment",
             "source",
             "weather_date"
         )
-        .agg(
-            round(avg("temperature_2m"), 2).alias("avg_temperature_2m"),
-            round(avg("relative_humidity_2m"), 2).alias("avg_relative_humidity_2m"),
-            round(sum("precipitation"), 2).alias("total_precipitation"),
-            round(max("wind_speed_10m"), 2).alias("max_wind_speed_10m"),
-        )
+        .agg(*aggregation_expressions)
     )
 
     return gold_df
@@ -278,43 +305,42 @@ def write_audit_log(
     )
 
     print("Audit log written successfully")
+
+def validate_value_ranges(df, validation_rules):
+    for column_name, rules in validation_rules.items():
+        min_value = rules.get("min")
+        max_value = rules.get("max")
+
+        invalid_count = df.filter(
+            (col(column_name) < min_value) |
+            (col(column_name) > max_value)
+        ).count()
+
+        print(f"{column_name} invalid range count = {invalid_count}")
+
+        if invalid_count > 0:
+            raise ValueError(
+                f"Column {column_name} has {invalid_count} values outside range {min_value} to {max_value}"
+            )
+
+
 def run_data_quality_checks(bronze_df, silver_df, gold_df) -> None:
-    if bronze_df.count() == 0:
-        raise ValueError("Data quality failed: Bronze dataframe is empty")
 
-    if silver_df.count() == 0:
-        raise ValueError("Data quality failed: Silver dataframe is empty")
+    validate_row_count(bronze_df)
 
-    if gold_df.count() == 0:
-        raise ValueError("Data quality failed: Gold dataframe is empty")
+    validate_row_count(silver_df)
+
+    validate_row_count(gold_df)
 
     null_weather_date_count = silver_df.filter(
         col("weather_date").isNull()
     ).count()
 
+    print(f"weather_date null count = {null_weather_date_count}")
+
     if null_weather_date_count > 0:
         raise ValueError(
             f"Data quality failed: {null_weather_date_count} rows have null weather_date"
-        )
-
-    invalid_humidity_count = silver_df.filter(
-        (col("relative_humidity_2m") < 0) |
-        (col("relative_humidity_2m") > 100)
-    ).count()
-
-    if invalid_humidity_count > 0:
-        raise ValueError(
-            f"Data quality failed: {invalid_humidity_count} rows have invalid humidity"
-        )
-
-    invalid_temperature_count = silver_df.filter(
-        (col("temperature_2m") < -50) |
-        (col("temperature_2m") > 60)
-    ).count()
-
-    if invalid_temperature_count > 0:
-        raise ValueError(
-            f"Data quality failed: {invalid_temperature_count} rows have invalid temperature"
         )
 
     print("Data quality checks passed")
@@ -389,6 +415,11 @@ def main() -> None:
         silver_df,
         source_metadata["primary_key"]
        )
+        
+        validate_value_ranges(
+        silver_df,
+        source_metadata["validation_rules"]
+       )
 
         silver_count = validate_row_count(silver_df)
 
@@ -415,7 +446,8 @@ def main() -> None:
         )
 
         gold_df = transform_silver_to_gold(
-            validated_silver_df
+            validated_silver_df,
+            source_metadata["gold_aggregations"]
         )
 
         gold_count = gold_df.count()

@@ -18,3 +18,12 @@ sources:
       - relative_humidity_2m
 
     partition_column: weather_date
+
+    validation_rules:
+      temperature_2m:
+        min: -50
+        max: 60
+
+      relative_humidity_2m:
+        min: 0
+        max: 100
